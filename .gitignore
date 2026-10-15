@@ -1,0 +1,6 @@
+venv/
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+used_cars.csv
+.DS_Store
