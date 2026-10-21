@@ -88,26 +88,45 @@ st.subheader("Vehicle details")
 c1, c2 = st.columns(2)
 with c1:
     brand = st.selectbox("Brand", BRANDS, index=None, placeholder="Select a brand")
-    model_year = st.number_input(
-        "Model year", min_value=1990, max_value=2025, value=None, step=1, placeholder="e.g. 2018"
-    )
-    mileage = st.number_input(
-        "Mileage (miles)", min_value=0, max_value=400_000, value=None, step=1_000, placeholder="e.g. 50000"
-    )
+    model_year_txt = st.text_input("Model year", placeholder="e.g. 2018")
+    mileage_txt = st.text_input("Mileage (miles)", placeholder="e.g. 50000")
     fuel_type = st.selectbox("Fuel type", FUEL_TYPES, index=None, placeholder="Select fuel type")
     transmission = st.selectbox("Transmission", TRANSMISSIONS, index=None, placeholder="Select transmission")
 with c2:
-    hp = st.number_input(
-        "Horsepower (HP)", min_value=50, max_value=1_000, value=None, step=10, placeholder="e.g. 200"
-    )
-    engine_l = st.number_input(
-        "Engine size (L)", min_value=0.6, max_value=8.5, value=None, step=0.1, format="%.1f",
-        placeholder="e.g. 2.0",
-    )
+    hp_txt = st.text_input("Horsepower (HP)", placeholder="e.g. 200")
+    engine_l_txt = st.text_input("Engine size (L)", placeholder="e.g. 2.0")
     cylinders = st.selectbox("Cylinders", [3, 4, 5, 6, 8, 10, 12], index=None, placeholder="Select cylinders")
     accident = st.radio("Accident history", ["None reported", "Accident or damage reported"], index=None)
 
+def parse_number(text, name, lo, hi, errors, integer=False):
+    """Return a number from a text box, or None if empty/invalid (invalid adds an error)."""
+    if not text or not text.strip():
+        return None
+    try:
+        value = float(text.strip().replace(",", ""))
+    except ValueError:
+        errors.append(f"{name} must be a number.")
+        return None
+    if integer and value != int(value):
+        errors.append(f"{name} must be a whole number.")
+        return None
+    if not lo <= value <= hi:
+        errors.append(f"{name} must be between {lo:g} and {hi:g}.")
+        return None
+    return int(value) if integer else value
+
+
 if st.button("Predict price", type="primary"):
+    errors = []
+    model_year = parse_number(model_year_txt, "Model year", 1990, 2025, errors, integer=True)
+    mileage = parse_number(mileage_txt, "Mileage", 0, 400_000, errors)
+    hp = parse_number(hp_txt, "Horsepower", 50, 1_000, errors)
+    engine_l = parse_number(engine_l_txt, "Engine size", 0.6, 8.5, errors)
+    if errors:
+        for msg in errors:
+            st.error(msg)
+        st.stop()
+
     required = {
         "Brand": brand, "Model year": model_year, "Mileage": mileage, "Fuel type": fuel_type,
         "Transmission": transmission, "Horsepower": hp, "Engine size": engine_l,
